@@ -46,11 +46,27 @@ module App =
         | TimerToggled on -> { model with TimerOn = on }, (if on then [ TickTimer ] else [])
         | TimedTick -> if model.TimerOn then { model with Count = model.Count + model.Step }, [ TickTimer ] else model, []
 
+    let webView (model : Model) odd =
+        if (model.Count % 2 = 0) = odd then
+            [
+                View.WebView(
+                    // key="web", // this doesn't fix it
+                    source = HtmlWebViewSource(Html = sprintf "<head><meta charset=\"UTF-8\"><style>body{font-family: Verdana, Geneva, sans-serif;}</style></head><body><h1>%d</h1></body>" model.Count)
+                )
+            ]
+        else
+            []
+
     let view (model: Model) dispatch =
         View.ContentPage(
           content=View.StackLayout(padding = Thickness 30.0, verticalOptions = LayoutOptions.Center,
             children=[
+
+              // This causes the HTML view that's created (either before or after the label) to sometimes be blank even though its source has been set
+              yield! webView model true
               View.Label(automationId="CountLabel", text=sprintf "%d" model.Count, horizontalOptions=LayoutOptions.Center, width=200.0, horizontalTextAlignment=TextAlignment.Center)
+              yield! webView model false
+
               View.Button(automationId="IncrementButton", text="Increment", command= (fun () -> dispatch Increment))
               View.Button(automationId="DecrementButton", text="Decrement", command= (fun () -> dispatch Decrement))
               View.StackLayout(padding = Thickness 20.0, orientation=StackOrientation.Horizontal, horizontalOptions=LayoutOptions.Center,
